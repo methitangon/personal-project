@@ -30,6 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.4 # Use the latest version
+  get_it: ^8.0.3   # Use the latest version
+  device_calendar: ^4.3.3 # Use the latest version
+  # Add other packages like intl for date formatting if needed later
 
 
   # The following adds the Cupertino Icons font to your application.
