@@ -1,22 +1,35 @@
 import 'package:get_it/get_it.dart';
+import 'package:investment_tracking/features/property_tracking/data/repositories/property_repository_impl.dart'; //<- Import Impl
+import 'package:investment_tracking/features/property_tracking/domain/repositories/property_repository.dart'; //<- Import Interface
+import 'package:investment_tracking/features/property_tracking/domain/usecases/get_properties_with_status.dart'; //<- Import UseCase 1
+import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_rent_as_paid.dart'; //<- Import UseCase 2
+// import 'package:investment_tracking/features/property_tracking/data/datasources/calendar_data_source.dart'; //<- Needed later
 
-// Create a global instance of GetIt. We often call it 'sl' (Service Locator).
 final sl = GetIt.instance;
 
-// This function will be used to register all the dependencies.
-// It's async in case some setup needs async work later.
 Future<void> init() async {
   // --- Register Core components ---
-  // Example: sl.registerLazySingleton(() => MyHttpClient());
+  // e.g., sl.registerLazySingleton(() => http.Client());
 
   // --- Register Features ---
 
   // Feature: Property Tracking
-  // Register Data sources, Repositories, Use cases, State Notifiers etc. here later
-  // Example:
-  // sl.registerLazySingleton<PropertyRepository>(() => PropertyRepositoryImpl(dataSource: sl()));
-  // sl.registerLazySingleton<CalendarDataSource>(() => CalendarDataSourceImpl(deviceCalendarPlugin: sl()));
-  // sl.registerFactory(() => GetPropertiesUseCase(repository: sl())); // Factory if needs fresh instance
+  // Use Cases (Factories are often suitable for use cases)
+  sl.registerFactory(
+      () => GetPropertiesWithStatus(sl())); // Pass repository implementation
+  sl.registerFactory(
+      () => MarkRentAsPaid(sl())); // Pass repository implementation
 
-  print('Dependency Injection Initialized'); // Optional: for confirmation
+  // Repository (Lazy Singleton - create instance only when first needed)
+  // Register the Implementation, but provide it when the Interface is requested
+  sl.registerLazySingleton<PropertyRepository>(
+    () =>
+        PropertyRepositoryImpl(), // Pass dependencies here later (e.g., dataSource: sl())
+  );
+
+  // Data Sources (Register later)
+  // sl.registerLazySingleton<CalendarDataSource>(() => CalendarDataSourceImpl(deviceCalendarPlugin: sl()));
+  // sl.registerLazySingleton(() => DeviceCalendarPlugin()); // Register the plugin itself
+
+  print('Dependency Injection Initialized');
 }
