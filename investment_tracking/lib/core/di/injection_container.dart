@@ -1,35 +1,33 @@
+// lib/core/di/injection_container.dart
 import 'package:get_it/get_it.dart';
-import 'package:investment_tracking/features/property_tracking/data/repositories/property_repository_impl.dart'; //<- Import Impl
-import 'package:investment_tracking/features/property_tracking/domain/repositories/property_repository.dart'; //<- Import Interface
-import 'package:investment_tracking/features/property_tracking/domain/usecases/get_properties_with_status.dart'; //<- Import UseCase 1
-import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_rent_as_paid.dart'; //<- Import UseCase 2
-// import 'package:investment_tracking/features/property_tracking/data/datasources/calendar_data_source.dart'; //<- Needed later
+import 'package:device_calendar/device_calendar.dart'; // <-- Import device_calendar
+import 'package:investment_tracking/features/property_tracking/data/datasources/calendar_data_source.dart'; // <-- Import DS Interface
+import 'package:investment_tracking/features/property_tracking/data/datasources/calendar_data_source_impl.dart'; // <-- Import DS Impl
+import 'package:investment_tracking/features/property_tracking/data/repositories/property_repository_impl.dart';
+import 'package:investment_tracking/features/property_tracking/domain/repositories/property_repository.dart';
+import 'package:investment_tracking/features/property_tracking/domain/usecases/get_properties_with_status.dart';
+import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_rent_as_paid.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
   // --- Register Core components ---
-  // e.g., sl.registerLazySingleton(() => http.Client());
+  // Register the DeviceCalendarPlugin instance
+  sl.registerLazySingleton(() => DeviceCalendarPlugin());
 
-  // --- Register Features ---
+  sl.registerFactory(() => GetPropertiesWithStatus(sl()));
+  sl.registerFactory(() => MarkRentAsPaid(sl()));
 
-  // Feature: Property Tracking
-  // Use Cases (Factories are often suitable for use cases)
-  sl.registerFactory(
-      () => GetPropertiesWithStatus(sl())); // Pass repository implementation
-  sl.registerFactory(
-      () => MarkRentAsPaid(sl())); // Pass repository implementation
-
-  // Repository (Lazy Singleton - create instance only when first needed)
-  // Register the Implementation, but provide it when the Interface is requested
+  // Repository
   sl.registerLazySingleton<PropertyRepository>(
-    () =>
-        PropertyRepositoryImpl(), // Pass dependencies here later (e.g., dataSource: sl())
+    () => PropertyRepositoryImpl(
+        calendarDataSource: sl()), // <-- Inject data source
   );
 
-  // Data Sources (Register later)
-  // sl.registerLazySingleton<CalendarDataSource>(() => CalendarDataSourceImpl(deviceCalendarPlugin: sl()));
-  // sl.registerLazySingleton(() => DeviceCalendarPlugin()); // Register the plugin itself
+  // Data Sources
+  sl.registerLazySingleton<CalendarDataSource>(
+    () => CalendarDataSourceImpl(plugin: sl()), // <-- Inject plugin
+  );
 
-  print('Dependency Injection Initialized');
+  print('Dependency Injection Initialized with Calendar Logic');
 }

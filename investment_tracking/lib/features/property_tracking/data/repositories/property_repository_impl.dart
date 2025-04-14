@@ -1,30 +1,25 @@
+// lib/features/property_tracking/data/repositories/property_repository_impl.dart
+
 import '../../domain/entities/property.dart';
 import '../../domain/entities/payment_status.dart';
 import '../../domain/repositories/property_repository.dart';
-// import '../datasources/calendar_data_source.dart'; // Will need this later
+import '../datasources/calendar_data_source.dart';
 
 class PropertyRepositoryImpl implements PropertyRepository {
-  // final CalendarDataSource calendarDataSource; // Will need this later
+  final CalendarDataSource calendarDataSource;
 
-  // Constructor - uncomment dataSource later
-  // PropertyRepositoryImpl({required this.calendarDataSource});
-  PropertyRepositoryImpl(); // Temporary constructor
+  PropertyRepositoryImpl({required this.calendarDataSource});
 
+  // Keep getProperties hardcoded for now, or implement differently if needed
   @override
   Future<List<Property>> getProperties() async {
-    // --- TEMPORARY HARDCODED DATA ---
-    print("REPOSITORY: Returning hardcoded properties"); // Log for debugging
-    await Future.delayed(
-        const Duration(milliseconds: 100)); // Simulate network delay
+    print("REPOSITORY: Returning hardcoded properties");
+    await Future.delayed(const Duration(milliseconds: 100));
     return [
       Property(id: 'house_a', name: 'House A'),
       Property(id: 'house_b', name: 'House B'),
       Property(id: 'house_c', name: 'House C'),
     ];
-    // --- END TEMPORARY DATA ---
-
-    // LATER: Implement by potentially reading from a local DB or config
-    // Or maybe inferring from distinct calendar event titles if designed that way.
   }
 
   @override
@@ -32,17 +27,20 @@ class PropertyRepositoryImpl implements PropertyRepository {
     required String propertyId,
     required DateTime month,
   }) async {
-    // --- TEMPORARY HARDCODED DATA ---
     print(
-        "REPOSITORY: Returning hardcoded PENDING status for $propertyId / $month"); // Log
-    await Future.delayed(const Duration(milliseconds: 50)); // Simulate delay
-    // For testing, maybe return 'paid' for House B?
-    // if (propertyId == 'house_b') return PaymentStatus.paid;
-    return PaymentStatus.pending;
-    // --- END TEMPORARY DATA ---
+        "REPOSITORY: Calling DataSource getEventPaymentStatus for $propertyId / $month");
+    // We need the property name. For now, let's derive it simply from the ID.
+    // In a real app, you might fetch the property details first.
+    final properties =
+        await getProperties(); // Inefficient, ideally get name differently
+    final property = properties.firstWhere((p) => p.id == propertyId,
+        orElse: () => Property(id: propertyId, name: "Unknown Property"));
 
-    // LATER: Implement by calling calendarDataSource.getEventPaymentStatus(...)
-    // Need to pass propertyName too, might need to fetch it based on id if not passed in.
+    return await calendarDataSource.getEventPaymentStatus(
+      propertyId: propertyId,
+      propertyName: property.name, // Pass the name
+      month: month,
+    );
   }
 
   @override
@@ -50,13 +48,17 @@ class PropertyRepositoryImpl implements PropertyRepository {
     required String propertyId,
     required DateTime month,
   }) async {
-    // --- TEMPORARY NO-OP ---
     print(
-        "REPOSITORY: Simulating marking $propertyId / $month as paid (doing nothing yet)"); // Log
-    await Future.delayed(const Duration(milliseconds: 200)); // Simulate delay
-    // --- END TEMPORARY NO-OP ---
+        "REPOSITORY: Calling DataSource updateEventToPaid for $propertyId / $month");
+    // Again, derive property name simply for now.
+    final properties = await getProperties(); // Inefficient
+    final property = properties.firstWhere((p) => p.id == propertyId,
+        orElse: () => Property(id: propertyId, name: "Unknown Property"));
 
-    // LATER: Implement by calling calendarDataSource.updateEventToPaid(...)
-    // Need to pass propertyName too.
+    await calendarDataSource.updateEventToPaid(
+      propertyId: propertyId,
+      propertyName: property.name, // Pass the name
+      month: month,
+    );
   }
 }
