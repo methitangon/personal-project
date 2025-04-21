@@ -1,23 +1,25 @@
-// lib/features/property_tracking/domain/repositories/property_repository.dart
+import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart';
+
 import '../entities/property.dart';
 import '../entities/payment_status.dart';
 
 abstract class PropertyRepository {
-  /// Fetches the list of properties to track.
   Future<List<Property>> getProperties();
 
-  /// Gets the payment status for a specific property for a given month.
-  /// [month] should represent the month being queried (e.g., DateTime(2025, 4) for April 2025).
+  Future<List<RentalEvent>> getRentalEventsForMonth({
+    required DateTime month,
+  });
+
   Future<PaymentStatus> getPaymentStatus({
     required String propertyId,
     required DateTime month,
   });
 
-  /// Marks the rent for a specific property as paid for the given month.
-  Future<void> markRentAsPaid({
-    required String propertyId,
-    required DateTime month,
+  Future<void> markEventAsPaid({
+    required String eventId,
+    required String calendarId,
+    required String currentTitle,
+    required DateTime? start,
+    required DateTime? end,
   });
-
-  // Add other methods here later if needed
 }
