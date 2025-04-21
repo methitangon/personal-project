@@ -1,7 +1,12 @@
 import 'package:device_calendar/device_calendar.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/entities/payment_status.dart';
 import 'calendar_data_source.dart';
+
+const String HOUSE_EMOJI = '🏠';
+const String PAID_EMOJI = '✅';
+const String EMOJI_SEPARATOR = ' ';
 
 class CalendarDataSourceImpl implements CalendarDataSource {
   final DeviceCalendarPlugin _plugin;
@@ -32,123 +37,69 @@ class CalendarDataSourceImpl implements CalendarDataSource {
       return null;
     }
 
-    // Try to find the first writable calendar. In a real app, you might let the user choose.
-    final writableCalendar = calendarsResult.data!.firstWhere(
+    final calendar = calendarsResult.data!.firstWhere(
       (cal) => !(cal.isReadOnly ?? true),
-      orElse: () {
-        print("DATASOURCE: No writable calendar found.");
-        // Fallback: maybe try the first calendar even if read-only for reading events?
-        return calendarsResult.data!.first;
-      },
+      orElse: () => calendarsResult.data!.firstWhere(
+        (cal) => cal.id != null,
+        orElse: () {
+          print("DATASOURCE: No usable calendars found at all.");
+          return Calendar(id: null);
+        },
+      ),
     );
 
-    print(
-        "DATASOURCE: Using calendar ID: ${writableCalendar.id}, Name: ${writableCalendar.name}");
-    return writableCalendar.id;
+    if (calendar.id == null) {
+      return null;
+    }
+
+    if (calendar.isReadOnly ?? true) {
+      print(
+          "DATASOURCE: Warning - Using read-only calendar ID: ${calendar.id}, Name: ${calendar.name}. Updates will fail.");
+    } else {
+      print(
+          "DATASOURCE: Using writable calendar ID: ${calendar.id}, Name: ${calendar.name}");
+    }
+
+    return calendar.id;
   }
 
-  Event? _findMatchingEvent(
-      List<Event> events, String propertyName, DateTime month) {
+  Event? _findMatchingEvent(List<Event> events, String propertyName) {
     print(
-        "DATASOURCE: Searching for event matching '$propertyName' in month ${month.year}-${month.month}");
+        "DATASOURCE: Searching for event starting with '$HOUSE_EMOJI$EMOJI_SEPARATOR' and matching name '$propertyName'");
     print("DATASOURCE: Total events fetched for month: ${events.length}");
 
-    // --- CRUCIAL & POTENTIALLY FRAGILE LOGIC ---
-    // How do we reliably find the correct event?
-    // Assumptions:
-    // 1. Event title contains the property name (e.g., "🏠 House A Rent").
-    // 2. Event occurs within the specified month. (retrieveEvents already filtered by month range).
-
-    String searchTerm = propertyName; // Basic search term
-    // Maybe prefix with your emoji? Be consistent!
-    // String searchTerm = "🏠 $propertyName";
+    final String prefix = HOUSE_EMOJI + EMOJI_SEPARATOR;
 
     for (final event in events) {
-      print(
-          "DATASOURCE: Checking event: ${event.title} (Start: ${event.start}, End: ${event.end})");
-      // Check if title contains the property name (case-insensitive)
-      if (event.title != null &&
-          event.title!.toLowerCase().contains(searchTerm.toLowerCase())) {
-        // Additional check: Ensure the event actually falls within the target month
-        // (RetrieveEvents should handle this, but double-checking might be wise depending on recurrence)
-        // bool isInMonth = (event.start != null && event.start!.year == month.year && event.start!.month == month.month) ||
-        //                  (event.end != null && event.end!.year == month.year && event.end!.month == month.month);
-        // if (isInMonth) { // <-- Add this condition if needed
-        print("DATASOURCE: Found potential match: ${event.title}");
-        return event;
-        // }
+      if (event.title != null && event.title!.startsWith(prefix)) {
+        final String extractedName =
+            event.title!.substring(prefix.length).trim();
+        print(
+            "DATASOURCE: Checking event: '${event.title}' -> Extracted Name: '$extractedName'");
+
+        if (extractedName.toLowerCase() == propertyName.toLowerCase()) {
+          print(
+              "DATASOURCE: Found matching event: ${event.title} (ID: ${event.eventId})");
+          return event;
+        }
       }
     }
     print("DATASOURCE: No matching event found for '$propertyName'.");
-    return null; // No matching event found
+    return null;
   }
 
   @override
   Future<PaymentStatus> getEventPaymentStatus({
-    required String
-        propertyId, // Not directly used for searching calendar, name is used
+    required String propertyId,
     required String propertyName,
     required DateTime month,
   }) async {
     print(
-        "DATASOURCE: getEventPaymentStatus called for $propertyName / $month");
-    if (!await _requestPermissions())
-      return PaymentStatus.unknown; // Or throw an error
+        "DATASOURCE: getEventPaymentStatus called for $propertyName / $month (ID: $propertyId)");
+    if (!await _requestPermissions()) return PaymentStatus.unknown;
 
     final calendarId = await _findWritableCalendarId();
-    if (calendarId == null) return PaymentStatus.unknown; // Or throw
-
-    // Define the date range for the month
-    final startOfMonth = DateTime(month.year, month.month, 1);
-    final endOfMonth = DateTime(
-        month.year, month.month + 1, 0, 23, 59, 59); // Last moment of the month
-
-    try {
-      final eventsResult = await _plugin.retrieveEvents(
-        calendarId,
-        RetrieveEventsParams(startDate: startOfMonth, endDate: endOfMonth),
-      );
-
-      if (!eventsResult.isSuccess || eventsResult.data == null) {
-        print("DATASOURCE: Error retrieving events for $month.");
-        return PaymentStatus.unknown;
-      }
-
-      final matchingEvent =
-          _findMatchingEvent(eventsResult.data!, propertyName, month);
-
-      if (matchingEvent == null) {
-        return PaymentStatus
-            .pending; // Assuming if no event found, it's pending
-      }
-
-      // Check for the paid marker (e.g., "✅" in the title)
-      // This is also fragile - depends on exact format!
-      if (matchingEvent.title != null && matchingEvent.title!.contains("✅")) {
-        print("DATASOURCE: Event for $propertyName is marked as PAID.");
-        return PaymentStatus.paid;
-      } else {
-        print(
-            "DATASOURCE: Event for $propertyName is PENDING (found but not marked paid).");
-        return PaymentStatus.pending;
-      }
-    } catch (e) {
-      print("DATASOURCE: Exception retrieving/parsing events: $e");
-      return PaymentStatus.unknown; // Error state
-    }
-  }
-
-  @override
-  Future<void> updateEventToPaid({
-    required String propertyId, // Not used directly
-    required String propertyName,
-    required DateTime month,
-  }) async {
-    print("DATASOURCE: updateEventToPaid called for $propertyName / $month");
-    if (!await _requestPermissions()) return; // Or throw
-
-    final calendarId = await _findWritableCalendarId();
-    if (calendarId == null) return; // Or throw
+    if (calendarId == null) return PaymentStatus.unknown;
 
     final startOfMonth = DateTime(month.year, month.month, 1);
     final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
@@ -160,64 +111,146 @@ class CalendarDataSourceImpl implements CalendarDataSource {
       );
 
       if (!eventsResult.isSuccess || eventsResult.data == null) {
-        print("DATASOURCE: Error retrieving events before update.");
-        return; // Or throw
+        print(
+            "DATASOURCE: Error retrieving events for $month: ${eventsResult.errors}");
+        return PaymentStatus.unknown;
+      }
+
+      final matchingEvent =
+          _findMatchingEvent(eventsResult.data!, propertyName);
+
+      if (matchingEvent == null) {
+        print(
+            "DATASOURCE: No event found starting with '$HOUSE_EMOJI ' for '$propertyName', assuming PENDING.");
+        return PaymentStatus.pending;
+      }
+
+      if (matchingEvent.title != null &&
+          matchingEvent.title!
+              .trim()
+              .startsWith(PAID_EMOJI + EMOJI_SEPARATOR)) {
+        print("DATASOURCE: Event for $propertyName is marked as PAID.");
+        return PaymentStatus.paid;
+      } else {
+        print(
+            "DATASOURCE: Event for $propertyName is PENDING (found house emoji, no paid emoji).");
+        return PaymentStatus.pending;
+      }
+    } catch (e) {
+      print("DATASOURCE: Exception retrieving/parsing events: $e");
+      return PaymentStatus.unknown;
+    }
+  }
+
+  @override
+  Future<void> updateEventToPaid({
+    required String propertyId,
+    required String propertyName,
+    required DateTime month,
+  }) async {
+    print(
+        "DATASOURCE: updateEventToPaid called for $propertyName / $month (ID: $propertyId)");
+    if (!await _requestPermissions()) return;
+
+    final calendarId = await _findWritableCalendarId();
+    if (calendarId == null) return;
+
+    final calendarsResult = await _plugin.retrieveCalendars();
+    final selectedCalendar =
+        calendarsResult.data?.firstWhere((cal) => cal.id == calendarId);
+    if (selectedCalendar?.isReadOnly ?? true) {
+      print(
+          "DATASOURCE: Cannot update event, selected calendar '$calendarId' is read-only.");
+      throw PlatformException(
+          code: 'READ_ONLY_CALENDAR',
+          message: 'Cannot update events in a read-only calendar.');
+    }
+
+    final startOfMonth = DateTime(month.year, month.month, 1);
+    final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+
+    try {
+      final eventsResult = await _plugin.retrieveEvents(
+        calendarId,
+        RetrieveEventsParams(startDate: startOfMonth, endDate: endOfMonth),
+      );
+
+      if (!eventsResult.isSuccess || eventsResult.data == null) {
+        print(
+            "DATASOURCE: Error retrieving events before update: ${eventsResult.errors}");
+        return;
       }
 
       final eventToUpdate =
-          _findMatchingEvent(eventsResult.data!, propertyName, month);
+          _findMatchingEvent(eventsResult.data!, propertyName);
 
       if (eventToUpdate == null) {
         print(
-            "DATASOURCE: Cannot update - event not found for $propertyName / $month.");
-        return; // Or maybe create it? For now, just return.
+            "DATASOURCE: Cannot update - event starting with '$HOUSE_EMOJI ' not found for '$propertyName'.");
+        return;
       }
 
-      // Check if already marked paid
-      if (eventToUpdate.title != null && eventToUpdate.title!.contains("✅")) {
+      final originalTitle = eventToUpdate.title ?? '';
+
+      if (originalTitle.trim().startsWith(PAID_EMOJI + EMOJI_SEPARATOR)) {
         print("DATASOURCE: Event already marked paid. No update needed.");
         return;
       }
 
-      // --- Create the updated event ---
-      // Prepend the checkmark. Be careful not to exceed title length limits.
-      String updatedTitle =
-          "✅ ${eventToUpdate.title ?? propertyName}"; // Add checkmark
+      String updatedTitle;
+      if (originalTitle.startsWith(HOUSE_EMOJI + EMOJI_SEPARATOR)) {
+        updatedTitle = PAID_EMOJI + EMOJI_SEPARATOR + originalTitle;
+      } else {
+        updatedTitle = PAID_EMOJI +
+            EMOJI_SEPARATOR +
+            HOUSE_EMOJI +
+            EMOJI_SEPARATOR +
+            propertyName;
+        print(
+            "DATASOURCE: Warning - Original title didn't start with house emoji, constructing full new title.");
+      }
 
-      // Create a new Event object based on the old one
       final updatedEvent = Event(
-        calendarId, // Must match the calendar it came from
-        eventId: eventToUpdate
-            .eventId, // MUST provide the original event ID to update
-        title: updatedTitle,
+        calendarId,
+        eventId: eventToUpdate.eventId,
+        title: updatedTitle.trim(),
         description: eventToUpdate.description,
         start: eventToUpdate.start,
         end: eventToUpdate.end,
         allDay: eventToUpdate.allDay,
-        // Copy other relevant fields if necessary (location, attendees, recurrenceRule etc.)
       );
+
       final updateResult = await _plugin.createOrUpdateEvent(updatedEvent);
 
       if (updateResult != null) {
-        // <-- Check if the result object itself is null
-        if (updateResult.isSuccess) {
-          // <-- Now safe to access isSuccess
+        if (updateResult.isSuccess &&
+            updateResult.data != null &&
+            updateResult.data!.isNotEmpty) {
           print(
-              "DATASOURCE: Successfully updated event for $propertyName to paid. Event ID: ${updateResult.data}"); // Result.data often contains the event ID
+              "DATASOURCE: Successfully updated event for $propertyName to paid. Event ID: ${updateResult.data}");
         } else {
-          // Operation failed, log errors from the Result object
           print("DATASOURCE: Error updating event: ${updateResult.errors}");
-          // Handle error appropriately (e.g., throw custom exception, return failure status)
+          throw PlatformException(
+            code: 'UPDATE_FAILED',
+            message: 'Failed to update calendar event: ${updateResult.errors}',
+          );
         }
       } else {
-        // The call to createOrUpdateEvent itself failed to return a Result object
         print(
             "DATASOURCE: Failed to get a result from createOrUpdateEvent (plugin returned null).");
-        // Handle this severe error case appropriately
+        throw PlatformException(
+          code: 'UPDATE_FAILED',
+          message: 'Failed to update calendar event (null result).',
+        );
       }
+    } on PlatformException catch (e) {
+      print(
+          "DATASOURCE: PlatformException during event update: ${e.code} - ${e.message}");
+      rethrow;
     } catch (e) {
-      print("DATASOURCE: Exception during event update: $e");
-      // Handle error appropriately
+      print("DATASOURCE: Generic Exception during event update: $e");
+      throw Exception(
+          'An unexpected error occurred while updating the calendar event.');
     }
   }
 }

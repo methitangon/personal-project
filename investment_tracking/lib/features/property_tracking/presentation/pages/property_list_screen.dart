@@ -46,8 +46,7 @@ class PropertyListScreen extends StatelessWidget {
               );
             }
 
-            Widget errorWidget =
-                const SizedBox.shrink(); // Default to empty space
+            Widget errorWidget = const SizedBox.shrink();
             if (notifier.error != null && notifier.properties.isNotEmpty) {
               errorWidget = Padding(
                 padding: const EdgeInsets.all(8.0),
