@@ -53,6 +53,7 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   mockito: ^5.4.4 # Use the latest version found on pub.dev
   build_runner: ^2.4.9 # Use the latest version found on pub.dev
+  clock: ^1.1.1 # Add clock package
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

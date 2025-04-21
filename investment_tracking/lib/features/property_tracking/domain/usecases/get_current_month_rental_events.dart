@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import '../entities/rental_event.dart';
 import '../repositories/property_repository.dart';
 
@@ -7,8 +8,9 @@ class GetCurrentMonthRentalEvents {
   GetCurrentMonthRentalEvents(this.repository);
 
   Future<List<RentalEvent>> call() async {
-    final now = DateTime.now();
+    final now = clock.now();
     final currentMonth = DateTime(now.year, now.month);
-    return [];
+
+    return await repository.getRentalEventsForMonth(month: currentMonth);
   }
 }

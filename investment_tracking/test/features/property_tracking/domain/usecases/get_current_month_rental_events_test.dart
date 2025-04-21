@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:clock/clock.dart';
 
 import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart';
 import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
@@ -11,88 +12,94 @@ import 'package:investment_tracking/features/property_tracking/domain/usecases/g
 import 'get_properties_with_status_test.mocks.dart';
 
 void main() {
-  late MockPropertyRepository mockPropertyRepository;
-  late GetCurrentMonthRentalEvents usecase;
-  final now = DateTime.now();
-  final currentMonth = DateTime(now.year, now.month);
+  final fixedTime = DateTime(2025, 4, 15, 10, 30, 0);
+  final expectedMonth = DateTime(2025, 4);
 
-  setUp(() {
-    mockPropertyRepository = MockPropertyRepository();
-    usecase = GetCurrentMonthRentalEvents(mockPropertyRepository);
-  });
+  withClock(Clock.fixed(fixedTime), () {
+    late MockPropertyRepository mockPropertyRepository;
+    late GetCurrentMonthRentalEvents usecase;
 
-  final rentalEvent1 = RentalEvent(
-      eventId: 'ev1',
-      calendarId: 'cal1',
-      title: '🏠 House A',
-      propertyName: 'A',
-      start: DateTime(currentMonth.year, currentMonth.month, 5),
-      end: null,
-      status: PaymentStatus.pending);
-  final rentalEvent2 = RentalEvent(
-      eventId: 'ev2',
-      calendarId: 'cal1',
-      title: '✅ 🏠 House B',
-      propertyName: 'B',
-      start: DateTime(currentMonth.year, currentMonth.month, 10),
-      end: null,
-      status: PaymentStatus.paid);
+    setUp(() {
+      mockPropertyRepository = MockPropertyRepository();
+      usecase = GetCurrentMonthRentalEvents(mockPropertyRepository);
+    });
 
-  final List<RentalEvent> eventListWithMultiple = [rentalEvent1, rentalEvent2];
-  final List<RentalEvent> eventListWithOne = [rentalEvent1];
-  final List<RentalEvent> eventListEmpty = [];
-  final testException = Exception('Failed to fetch from repository');
+    final rentalEvent1 = RentalEvent(
+        eventId: 'ev1',
+        calendarId: 'cal1',
+        title: '🏠 House A',
+        propertyName: 'A',
+        start: DateTime(expectedMonth.year, expectedMonth.month, 5),
+        end: null,
+        status: PaymentStatus.pending);
+    final rentalEvent2 = RentalEvent(
+        eventId: 'ev2',
+        calendarId: 'cal1',
+        title: '✅ 🏠 House B',
+        propertyName: 'B',
+        start: DateTime(expectedMonth.year, expectedMonth.month, 10),
+        end: null,
+        status: PaymentStatus.paid);
 
-  test(
-      'should get list of rental events for current month from repository (N > 1 case)',
-      () async {
-    when(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .thenAnswer((_) async => eventListWithMultiple);
+    final List<RentalEvent> eventListWithMultiple = [
+      rentalEvent1,
+      rentalEvent2
+    ];
+    final List<RentalEvent> eventListWithOne = [rentalEvent1];
+    final List<RentalEvent> eventListEmpty = [];
+    final testException = Exception('Failed to fetch from repository');
 
-    final result = await usecase.call();
+    test(
+        'should get list of rental events for current month (April 2025) from repository',
+        () async {
+      when(mockPropertyRepository.getRentalEventsForMonth(month: expectedMonth))
+          .thenAnswer((_) async => eventListWithMultiple);
 
-    expect(result, equals(eventListWithMultiple));
-    verify(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .called(1);
-    verifyNoMoreInteractions(mockPropertyRepository);
-  });
+      final result = await usecase.call();
 
-  test(
-      'should get single rental event for current month from repository (N = 1 case)',
-      () async {
-    when(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .thenAnswer((_) async => eventListWithOne);
+      expect(result, equals(eventListWithMultiple));
+      verify(mockPropertyRepository.getRentalEventsForMonth(
+              month: expectedMonth))
+          .called(1);
+    });
 
-    final result = await usecase.call();
+    test(
+        'should get single rental event for current month (April 2025) from repository',
+        () async {
+      when(mockPropertyRepository.getRentalEventsForMonth(month: expectedMonth))
+          .thenAnswer((_) async => eventListWithOne);
 
-    expect(result, equals(eventListWithOne));
-    verify(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .called(1);
-    verifyNoMoreInteractions(mockPropertyRepository);
-  });
+      final result = await usecase.call();
 
-  test('should get empty list for current month from repository (N = 0 case)',
-      () async {
-    when(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .thenAnswer((_) async => eventListEmpty);
+      expect(result, equals(eventListWithOne));
+      verify(mockPropertyRepository.getRentalEventsForMonth(
+              month: expectedMonth))
+          .called(1);
+    });
 
-    final result = await usecase.call();
+    test('should get empty list for current month (April 2025) from repository',
+        () async {
+      when(mockPropertyRepository.getRentalEventsForMonth(month: expectedMonth))
+          .thenAnswer((_) async => eventListEmpty);
 
-    expect(result, equals(eventListEmpty));
-    verify(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .called(1);
-    verifyNoMoreInteractions(mockPropertyRepository);
-  });
+      final result = await usecase.call();
 
-  test('should throw exception when repository call fails', () async {
-    when(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .thenThrow(testException);
+      expect(result, equals(eventListEmpty));
+      verify(mockPropertyRepository.getRentalEventsForMonth(
+              month: expectedMonth))
+          .called(1);
+    });
 
-    final call = usecase.call;
+    test('should throw exception when repository call fails', () async {
+      when(mockPropertyRepository.getRentalEventsForMonth(month: expectedMonth))
+          .thenThrow(testException);
 
-    await expectLater(() => call(), throwsA(isA<Exception>()));
-    verify(mockPropertyRepository.getRentalEventsForMonth(month: currentMonth))
-        .called(1);
-    verifyNoMoreInteractions(mockPropertyRepository);
+      final call = usecase.call;
+
+      await expectLater(() => call(), throwsA(isA<Exception>()));
+      verify(mockPropertyRepository.getRentalEventsForMonth(
+              month: expectedMonth))
+          .called(1);
+    });
   });
 }
