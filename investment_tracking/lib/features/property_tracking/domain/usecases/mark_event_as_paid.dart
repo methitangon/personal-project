@@ -9,6 +9,12 @@ class MarkEventAsPaid {
   MarkEventAsPaid(this.repository);
 
   Future<void> call(RentalEvent event) async {
-    throw UnimplementedError('MarkEventAsPaid call() not implemented yet');
+    await repository.markEventAsPaid(
+      eventId: event.eventId,
+      calendarId: event.calendarId,
+      currentTitle: event.title,
+      start: event.start,
+      end: event.end,
+    );
   }
 }
