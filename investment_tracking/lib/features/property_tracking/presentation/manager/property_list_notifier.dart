@@ -1,16 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:investment_tracking/features/property_tracking/domain/entities/property.dart';
 import '../../domain/entities/payment_status.dart';
-import '../../domain/usecases/get_properties_with_status.dart';
-import '../../domain/usecases/mark_rent_as_paid.dart';
+
+import '../../domain/usecases/mark_event_as_paid.dart';
 
 class PropertyListNotifier extends ChangeNotifier {
   final GetPropertiesWithStatus getPropertiesUseCase;
-  final MarkRentAsPaid markRentAsPaidUseCase;
+  final MarkEventAsPaid markEventAsPaidUseCase;
 
   PropertyListNotifier({
     required this.getPropertiesUseCase,
-    required this.markRentAsPaidUseCase,
+    required this.markEventAsPaidUseCase,
   }) {
     fetchProperties();
   }
@@ -55,8 +55,8 @@ class PropertyListNotifier extends ChangeNotifier {
     _error = null;
 
     try {
-      await markRentAsPaidUseCase.call(
-        MarkRentAsPaidParams(propertyId: propertyId, month: _currentMonth),
+      await markEventAsPaidUseCase.call(
+        MarkEventAsPaidParams(propertyId: propertyId, month: _currentMonth),
       );
       print(
           "NOTIFIER: Mark as paid successful for $propertyId. Refetching list...");

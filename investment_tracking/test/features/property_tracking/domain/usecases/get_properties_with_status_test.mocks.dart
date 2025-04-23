@@ -5,8 +5,6 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart'
-    as _i6;
 import 'package:investment_tracking/features/property_tracking/domain/entities/property.dart'
     as _i4;
 import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart'
@@ -58,24 +56,6 @@ class MockPropertyRepository extends _i1.Mock
         returnValue:
             _i3.Future<List<_i5.RentalEvent>>.value(<_i5.RentalEvent>[]),
       ) as _i3.Future<List<_i5.RentalEvent>>);
-
-  @override
-  _i3.Future<_i6.PaymentStatus> getPaymentStatus({
-    required String? propertyId,
-    required DateTime? month,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getPaymentStatus,
-          [],
-          {
-            #propertyId: propertyId,
-            #month: month,
-          },
-        ),
-        returnValue:
-            _i3.Future<_i6.PaymentStatus>.value(_i6.PaymentStatus.pending),
-      ) as _i3.Future<_i6.PaymentStatus>);
 
   @override
   _i3.Future<void> markEventAsPaid({

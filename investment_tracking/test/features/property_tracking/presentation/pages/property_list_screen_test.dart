@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
+import 'package:investment_tracking/features/property_tracking/domain/entities/property.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
@@ -6,14 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:investment_tracking/core/di/injection_container.dart' as di;
 import 'package:investment_tracking/features/property_tracking/presentation/pages/property_list_screen.dart';
 import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart';
-import 'package:investment_tracking/features/property_tracking/domain/usecases/get_properties_with_status.dart';
-import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_rent_as_paid.dart';
-import 'package:investment_tracking/features/property_tracking/domain/entities/property.dart';
-import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
 
-@GenerateMocks([PropertyListNotifier, GetPropertiesWithStatus, MarkRentAsPaid])
-import 'property_list_screen_test.mocks.dart';
-
+@GenerateMocks([PropertyListNotifier])
 void main() {
   late MockPropertyListNotifier mockNotifier;
 

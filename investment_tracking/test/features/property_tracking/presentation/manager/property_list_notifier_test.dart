@@ -4,7 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
 import 'package:investment_tracking/features/property_tracking/domain/entities/property.dart';
 import 'package:investment_tracking/features/property_tracking/domain/usecases/get_properties_with_status.dart';
-import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_rent_as_paid.dart';
+import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_event_as_paid.dart';
 import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart';
 
 import 'property_list_notifier_test.mocks.dart';
