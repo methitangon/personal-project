@@ -1,5 +1,5 @@
 import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart';
-
+import 'package:timezone/timezone.dart';
 import '../entities/property.dart';
 
 abstract class PropertyRepository {
@@ -13,7 +13,7 @@ abstract class PropertyRepository {
     required String eventId,
     required String calendarId,
     required String currentTitle,
-    required DateTime? start,
-    required DateTime? end,
+    required TZDateTime? start,
+    required TZDateTime? end,
   });
 }

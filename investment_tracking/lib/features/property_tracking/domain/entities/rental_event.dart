@@ -1,13 +1,14 @@
-import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
 import 'package:equatable/equatable.dart';
+import 'package:timezone/timezone.dart';
+import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
 
 class RentalEvent extends Equatable {
   final String eventId;
   final String calendarId;
   final String title;
   final String propertyName;
-  final DateTime? start;
-  final DateTime? end;
+  final TZDateTime? start;
+  final TZDateTime? end;
   final PaymentStatus status;
 
   const RentalEvent({

@@ -1,17 +1,14 @@
-import '../../domain/entities/payment_status.dart';
+import 'package:device_calendar/device_calendar.dart';
+import 'package:timezone/timezone.dart';
 
 abstract class CalendarDataSource {
-  /// Retrieves the payment status from the calendar event for a property/month.
-  Future<PaymentStatus> getEventPaymentStatus({
-    required String propertyId,
-    required String propertyName, // May need name for searching event title
-    required DateTime month,
-  });
+  Future<List<Event>> getRawRentalEvents({required DateTime month});
 
-  /// Updates the calendar event to mark rent as paid for a property/month.
   Future<void> updateEventToPaid({
-    required String propertyId,
-    required String propertyName,
-    required DateTime month,
+    required String eventId,
+    required String calendarId,
+    required String currentTitle,
+    required TZDateTime? start,
+    required TZDateTime? end,
   });
 }
