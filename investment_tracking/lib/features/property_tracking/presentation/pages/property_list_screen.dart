@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:investment_tracking/core/di/injection_container.dart';
+import '../../domain/entities/rental_event.dart';
 import '../manager/property_list_notifier.dart';
 import '../widgets/property_list_item.dart';
 
@@ -13,16 +14,15 @@ class PropertyListScreen extends StatelessWidget {
       create: (_) => sl<PropertyListNotifier>(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Property Rent Status'),
+          title: const Text('Monthly Rental Events'),
           actions: [
             Consumer<PropertyListNotifier>(
               builder: (context, notifier, child) {
                 return IconButton(
                   icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh List',
-                  onPressed: notifier.isLoading
-                      ? null
-                      : () => notifier.fetchProperties(),
+                  tooltip: 'Refresh Events',
+                  onPressed:
+                      notifier.isLoading ? null : () => notifier.fetchEvents(),
                 );
               },
             ),
@@ -30,11 +30,11 @@ class PropertyListScreen extends StatelessWidget {
         ),
         body: Consumer<PropertyListNotifier>(
           builder: (context, notifier, child) {
-            if (notifier.isLoading && notifier.properties.isEmpty) {
+            if (notifier.isLoading && notifier.rentalEvents.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (notifier.error != null && notifier.properties.isEmpty) {
+            if (notifier.error != null && notifier.rentalEvents.isEmpty) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -47,7 +47,7 @@ class PropertyListScreen extends StatelessWidget {
             }
 
             Widget errorWidget = const SizedBox.shrink();
-            if (notifier.error != null && notifier.properties.isNotEmpty) {
+            if (notifier.error != null && notifier.rentalEvents.isNotEmpty) {
               errorWidget = Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
@@ -58,21 +58,37 @@ class PropertyListScreen extends StatelessWidget {
               );
             }
 
+            if (!notifier.isLoading &&
+                notifier.error == null &&
+                notifier.rentalEvents.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'No rental events (starting with 🏠) found for the current month.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+              );
+            }
+
             return Column(
               children: [
                 errorWidget,
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: () => notifier.fetchProperties(),
+                    onRefresh: () => notifier.fetchEvents(),
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: notifier.properties.length,
+                      itemCount: notifier.rentalEvents.length,
                       itemBuilder: (context, index) {
-                        final propertyInfo = notifier.properties[index];
+                        final rentalEvent = notifier.rentalEvents[index];
                         return PropertyListItem(
-                          propertyInfo: propertyInfo,
-                          onMarkAsPaid: () => notifier
-                              .markPropertyAsPaid(propertyInfo.property.id),
+                          propertyInfo: rentalEvent,
+                          rentalEvent: rentalEvent,
+                          onMarkAsPaid: () =>
+                              notifier.markEventPaid(rentalEvent),
                         );
                       },
                     ),

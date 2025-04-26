@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import '../../domain/entities/payment_status.dart';
-import '../../domain/usecases/get_properties_with_status.dart';
+import '../../domain/entities/rental_event.dart';
 
 class PropertyListItem extends StatelessWidget {
-  final PropertyStatusInfo propertyInfo;
+  final RentalEvent rentalEvent;
 
   final VoidCallback onMarkAsPaid;
 
   const PropertyListItem({
     super.key,
-    required this.propertyInfo,
+    required this.rentalEvent,
     required this.onMarkAsPaid,
   });
 
@@ -19,7 +21,7 @@ class PropertyListItem extends StatelessWidget {
     Color statusColor;
     String statusText;
 
-    switch (propertyInfo.status) {
+    switch (rentalEvent.status) {
       case PaymentStatus.paid:
         statusIcon =
             const Icon(Icons.check_circle, color: Colors.green, size: 28);
@@ -37,8 +39,14 @@ class PropertyListItem extends StatelessWidget {
         statusIcon =
             const Icon(Icons.help_outline, color: Colors.grey, size: 28);
         statusColor = Colors.grey;
-        statusText = "Unknown";
+        statusText = "Unknown Status";
         break;
+    }
+
+    String dateString = "";
+    if (rentalEvent.start != null) {
+      final dateFormatter = DateFormat('MMM d, yyyy');
+      dateString = dateFormatter.format(rentalEvent.start!);
     }
 
     return ListTile(
@@ -47,17 +55,17 @@ class PropertyListItem extends StatelessWidget {
         child: statusIcon,
       ),
       title: Text(
-        propertyInfo.property.name,
+        rentalEvent.title,
         style: Theme.of(context).textTheme.titleMedium,
       ),
       subtitle: Text(
-        statusText,
+        "$statusText${dateString.isNotEmpty ? ' ($dateString)' : ''}",
         style: TextStyle(
           color: statusColor,
           fontWeight: FontWeight.bold,
         ),
       ),
-      trailing: propertyInfo.status == PaymentStatus.pending
+      trailing: rentalEvent.status == PaymentStatus.pending
           ? IconButton(
               icon: const Icon(Icons.price_check),
               tooltip: 'Mark as Paid',
@@ -65,10 +73,8 @@ class PropertyListItem extends StatelessWidget {
               onPressed: onMarkAsPaid,
             )
           : null,
-      contentPadding: const EdgeInsets.symmetric(
-        vertical: 8.0,
-        horizontal: 16.0,
-      ),
+      contentPadding:
+          const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
     );
   }
 }
