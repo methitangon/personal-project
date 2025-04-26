@@ -3,13 +3,17 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
-import 'dart:ui' as _i5;
+import 'dart:async' as _i6;
+import 'dart:ui' as _i7;
 
-import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_event_as_paid.dart'
+import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart'
+    as _i5;
+import 'package:investment_tracking/features/property_tracking/domain/usecases/get_current_month_rental_events.dart'
     as _i2;
-import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart'
+import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_event_as_paid.dart'
     as _i3;
+import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart'
+    as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -25,9 +29,20 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeMarkEventAsPaid_0 extends _i1.SmartFake
-    implements _i2.MarkEventAsPaid {
-  _FakeMarkEventAsPaid_0(
+class _FakeGetCurrentMonthRentalEvents_0 extends _i1.SmartFake
+    implements _i2.GetCurrentMonthRentalEvents {
+  _FakeGetCurrentMonthRentalEvents_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeMarkEventAsPaid_1 extends _i1.SmartFake
+    implements _i3.MarkEventAsPaid {
+  _FakeMarkEventAsPaid_1(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -40,19 +55,29 @@ class _FakeMarkEventAsPaid_0 extends _i1.SmartFake
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockPropertyListNotifier extends _i1.Mock
-    implements _i3.PropertyListNotifier {
+    implements _i4.PropertyListNotifier {
   MockPropertyListNotifier() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i2.MarkEventAsPaid get markEventAsPaidUseCase => (super.noSuchMethod(
+  _i2.GetCurrentMonthRentalEvents get getCurrentMonthRentalEventsUseCase =>
+      (super.noSuchMethod(
+        Invocation.getter(#getCurrentMonthRentalEventsUseCase),
+        returnValue: _FakeGetCurrentMonthRentalEvents_0(
+          this,
+          Invocation.getter(#getCurrentMonthRentalEventsUseCase),
+        ),
+      ) as _i2.GetCurrentMonthRentalEvents);
+
+  @override
+  _i3.MarkEventAsPaid get markEventAsPaidUseCase => (super.noSuchMethod(
         Invocation.getter(#markEventAsPaidUseCase),
-        returnValue: _FakeMarkEventAsPaid_0(
+        returnValue: _FakeMarkEventAsPaid_1(
           this,
           Invocation.getter(#markEventAsPaidUseCase),
         ),
-      ) as _i2.MarkEventAsPaid);
+      ) as _i3.MarkEventAsPaid);
 
   @override
   bool get isLoading => (super.noSuchMethod(
@@ -61,10 +86,10 @@ class MockPropertyListNotifier extends _i1.Mock
       ) as bool);
 
   @override
-  List<dynamic> get properties => (super.noSuchMethod(
-        Invocation.getter(#properties),
-        returnValue: <dynamic>[],
-      ) as List<dynamic>);
+  List<_i5.RentalEvent> get rentalEvents => (super.noSuchMethod(
+        Invocation.getter(#rentalEvents),
+        returnValue: <_i5.RentalEvent>[],
+      ) as List<_i5.RentalEvent>);
 
   @override
   bool get hasListeners => (super.noSuchMethod(
@@ -73,28 +98,28 @@ class MockPropertyListNotifier extends _i1.Mock
       ) as bool);
 
   @override
-  _i4.Future<void> fetchProperties() => (super.noSuchMethod(
+  _i6.Future<void> fetchEvents() => (super.noSuchMethod(
         Invocation.method(
-          #fetchProperties,
+          #fetchEvents,
           [],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  _i4.Future<void> markPropertyAsPaid(String? propertyId) =>
+  _i6.Future<void> markEventPaid(_i5.RentalEvent? eventToMarkPaid) =>
       (super.noSuchMethod(
         Invocation.method(
-          #markPropertyAsPaid,
-          [propertyId],
+          #markEventPaid,
+          [eventToMarkPaid],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  void addListener(_i5.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i7.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -103,7 +128,7 @@ class MockPropertyListNotifier extends _i1.Mock
       );
 
   @override
-  void removeListener(_i5.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i7.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],

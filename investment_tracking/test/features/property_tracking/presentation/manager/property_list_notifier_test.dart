@@ -1,124 +1,151 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
-import 'package:investment_tracking/features/property_tracking/domain/entities/property.dart';
-import 'package:investment_tracking/features/property_tracking/domain/usecases/get_properties_with_status.dart';
-import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_event_as_paid.dart';
-import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart';
+import 'package:clock/clock.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 
+import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart';
+import 'package:investment_tracking/features/property_tracking/domain/usecases/get_current_month_rental_events.dart';
+import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_event_as_paid.dart';
+import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart';
+import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
+
+@GenerateMocks([GetCurrentMonthRentalEvents, MarkEventAsPaid])
 import 'property_list_notifier_test.mocks.dart';
 
-@GenerateMocks([GetPropertiesWithStatus, MarkRentAsPaid])
 void main() {
-  late MockGetPropertiesWithStatus mockGetPropertiesUseCase;
-  late MockMarkRentAsPaid mockMarkRentAsPaidUseCase;
+  tz_data.initializeTimeZones();
+  final location = tz.local;
+
+  late MockGetCurrentMonthRentalEvents mockGetEventsUseCase;
+  late MockMarkEventAsPaid mockMarkEventUseCase;
   late PropertyListNotifier notifier;
 
-  final now = DateTime.now();
-  final currentMonth = DateTime(now.year, now.month);
-
-  final propertiesList = [
-    Property(id: 'house_a', name: 'House A'),
-    Property(id: 'house_b', name: 'House B'),
-  ];
-
-  final propertiesStatusInfoList = [
-    PropertyStatusInfo(
-        property: propertiesList[0], status: PaymentStatus.pending),
-    PropertyStatusInfo(property: propertiesList[1], status: PaymentStatus.paid),
-  ];
+  final fixedTime = DateTime(2025, 4, 15);
+  final testEvent1 = RentalEvent(
+      eventId: 'ev1',
+      calendarId: 'cal1',
+      title: '🏠 Prop A',
+      propertyName: 'Prop A',
+      start: tz.TZDateTime.from(
+          fixedTime.add(const Duration(days: -10)), location),
+      end: null,
+      status: PaymentStatus.pending);
+  final testEvent2 = RentalEvent(
+      eventId: 'ev2',
+      calendarId: 'cal1',
+      title: '✅ 🏠 Prop B',
+      propertyName: 'Prop B',
+      start:
+          tz.TZDateTime.from(fixedTime.add(const Duration(days: -5)), location),
+      end: null,
+      status: PaymentStatus.paid);
+  final List<RentalEvent> testEventList = [testEvent1, testEvent2];
 
   setUp(() {
-    mockGetPropertiesUseCase = MockGetPropertiesWithStatus();
-    mockMarkRentAsPaidUseCase = MockMarkRentAsPaid();
+    mockGetEventsUseCase = MockGetCurrentMonthRentalEvents();
+    mockMarkEventUseCase = MockMarkEventAsPaid();
 
-    when(mockGetPropertiesUseCase.call(currentMonth))
-        .thenAnswer((_) async => propertiesStatusInfoList);
+    when(mockGetEventsUseCase.call()).thenAnswer((_) async => testEventList);
 
     notifier = PropertyListNotifier(
-      getPropertiesUseCase: mockGetPropertiesUseCase,
-      markRentAsPaidUseCase: mockMarkRentAsPaidUseCase,
+      getCurrentMonthRentalEventsUseCase: mockGetEventsUseCase,
+      markEventAsPaidUseCase: mockMarkEventUseCase,
     );
   });
 
   group('PropertyListNotifier Tests', () {
-    test('initial state should have properties loaded and call fetchProperties',
+    test('initial state should call fetchEvents and load initial events',
         () async {
-      verify(mockGetPropertiesUseCase.call(currentMonth)).called(1);
+      verify(mockGetEventsUseCase.call()).called(1);
       await Future.delayed(Duration.zero);
       expect(notifier.isLoading, false);
-      expect(notifier.properties, propertiesStatusInfoList);
+      expect(notifier.rentalEvents, equals(testEventList));
       expect(notifier.error, null);
     });
 
-    group('fetchProperties', () {
-      test('should update state correctly on successful fetch', () async {
-        when(mockGetPropertiesUseCase.call(currentMonth))
-            .thenAnswer((_) async => propertiesStatusInfoList);
+    group('fetchEvents', () {
+      final List<RentalEvent> anotherEventList = [testEvent1];
 
-        final future = notifier.fetchProperties();
+      test('should update state correctly on successful fetch', () async {
+        when(mockGetEventsUseCase.call())
+            .thenAnswer((_) async => anotherEventList);
+
+        final future = notifier.fetchEvents();
+
+        expect(notifier.isLoading, true);
         expect(notifier.error, null);
 
         await future;
 
         expect(notifier.isLoading, false);
-        expect(notifier.properties, propertiesStatusInfoList);
+        expect(notifier.rentalEvents, equals(anotherEventList));
         expect(notifier.error, null);
-        verify(mockGetPropertiesUseCase.call(currentMonth)).called(2);
+        verify(mockGetEventsUseCase.call()).called(2);
       });
 
       test('should update state correctly on failed fetch', () async {
-        final exception = Exception('Fetch Failed');
-        when(mockGetPropertiesUseCase.call(currentMonth)).thenThrow(exception);
+        final fetchException = Exception('Fetch Failed');
+        when(mockGetEventsUseCase.call()).thenThrow(fetchException);
 
-        final future = notifier.fetchProperties();
+        final future = notifier.fetchEvents();
 
         await future;
 
         expect(notifier.isLoading, false);
-        expect(notifier.properties, isEmpty);
+        expect(notifier.rentalEvents, isEmpty);
         expect(notifier.error, contains('Fetch Failed'));
-        verify(mockGetPropertiesUseCase.call(currentMonth)).called(2);
+        verify(mockGetEventsUseCase.call()).called(2);
       });
     });
 
-    group('markPropertyAsPaid', () {
-      final propertyId = 'house_a';
-      final params =
-          MarkRentAsPaidParams(propertyId: propertyId, month: currentMonth);
+    group('markEventPaid', () {
+      final eventToMark = testEvent1;
 
-      test('should call use case and refresh list on success', () async {
-        when(mockMarkRentAsPaidUseCase.call(any)).thenAnswer((_) async {});
-        when(mockGetPropertiesUseCase.call(currentMonth))
-            .thenAnswer((_) async => propertiesStatusInfoList);
+      test('should call MarkEventAsPaid use case and refresh list on success',
+          () async {
+        when(mockMarkEventUseCase.call(eventToMark)).thenAnswer((_) async {});
+        when(mockGetEventsUseCase.call())
+            .thenAnswer((_) async => testEventList);
 
-        await notifier.markPropertyAsPaid(propertyId);
+        await notifier.markEventPaid(eventToMark);
 
-        verify(mockMarkRentAsPaidUseCase.call(argThat(
-            predicate<MarkRentAsPaidParams>((params) =>
-                params.propertyId == propertyId &&
-                params.month == currentMonth)))).called(1);
-        verify(mockGetPropertiesUseCase.call(currentMonth)).called(2);
+        verify(mockMarkEventUseCase.call(eventToMark)).called(1);
+        verify(mockGetEventsUseCase.call()).called(2);
         expect(notifier.isLoading, false);
-        expect(notifier.properties, propertiesStatusInfoList);
+        expect(notifier.rentalEvents, equals(testEventList));
         expect(notifier.error, null);
       });
 
-      test('should set error state and not refresh list on failure', () async {
-        final exception = Exception('Update Failed');
-        when(mockMarkRentAsPaidUseCase.call(any)).thenThrow(exception);
-
+      test('should set error state and not refresh list on mark failure',
+          () async {
+        final updateException = Exception('Update Failed');
+        when(mockMarkEventUseCase.call(eventToMark)).thenThrow(updateException);
         await Future.delayed(Duration.zero);
-        expect(notifier.properties, propertiesStatusInfoList);
+        expect(notifier.rentalEvents, testEventList);
 
-        await notifier.markPropertyAsPaid(propertyId);
+        await notifier.markEventPaid(eventToMark);
 
-        verify(mockMarkRentAsPaidUseCase.call(any)).called(1);
-        verify(mockGetPropertiesUseCase.call(currentMonth)).called(1);
+        verify(mockMarkEventUseCase.call(eventToMark)).called(1);
+        verify(mockGetEventsUseCase.call()).called(1);
         expect(notifier.isLoading, false);
-        expect(notifier.properties, propertiesStatusInfoList);
-        expect(notifier.error, contains('Update Failed'));
+        expect(notifier.rentalEvents, equals(testEventList));
+        expect(notifier.error,
+            contains("Failed to mark '${eventToMark.propertyName}' as paid"));
+      });
+
+      test('should not call use case if event is already paid', () async {
+        final alreadyPaidEvent = testEvent2;
+        expect(alreadyPaidEvent.status, PaymentStatus.paid);
+
+        await notifier.markEventPaid(alreadyPaidEvent);
+
+        verifyNever(mockMarkEventUseCase.call(any));
+        verify(mockGetEventsUseCase.call()).called(1);
+        expect(notifier.isLoading, false);
+        expect(notifier.rentalEvents, equals(testEventList));
+        expect(notifier.error, null);
       });
     });
   });
