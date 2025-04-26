@@ -12,6 +12,7 @@ import 'package:investment_tracking/features/property_tracking/domain/entities/r
 import 'package:investment_tracking/features/property_tracking/domain/repositories/property_repository.dart'
     as _i2;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:timezone/timezone.dart' as _i6;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -62,8 +63,8 @@ class MockPropertyRepository extends _i1.Mock
     required String? eventId,
     required String? calendarId,
     required String? currentTitle,
-    required DateTime? start,
-    required DateTime? end,
+    required _i6.TZDateTime? start,
+    required _i6.TZDateTime? end,
   }) =>
       (super.noSuchMethod(
         Invocation.method(

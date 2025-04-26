@@ -3,11 +3,13 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
-import 'dart:ui' as _i4;
+import 'dart:async' as _i4;
+import 'dart:ui' as _i5;
 
-import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart'
+import 'package:investment_tracking/features/property_tracking/domain/usecases/mark_event_as_paid.dart'
     as _i2;
+import 'package:investment_tracking/features/property_tracking/presentation/manager/property_list_notifier.dart'
+    as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -23,14 +25,34 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
+class _FakeMarkEventAsPaid_0 extends _i1.SmartFake
+    implements _i2.MarkEventAsPaid {
+  _FakeMarkEventAsPaid_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [PropertyListNotifier].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockPropertyListNotifier extends _i1.Mock
-    implements _i2.PropertyListNotifier {
+    implements _i3.PropertyListNotifier {
   MockPropertyListNotifier() {
     _i1.throwOnMissingStub(this);
   }
+
+  @override
+  _i2.MarkEventAsPaid get markEventAsPaidUseCase => (super.noSuchMethod(
+        Invocation.getter(#markEventAsPaidUseCase),
+        returnValue: _FakeMarkEventAsPaid_0(
+          this,
+          Invocation.getter(#markEventAsPaidUseCase),
+        ),
+      ) as _i2.MarkEventAsPaid);
 
   @override
   bool get isLoading => (super.noSuchMethod(
@@ -51,28 +73,28 @@ class MockPropertyListNotifier extends _i1.Mock
       ) as bool);
 
   @override
-  _i3.Future<void> fetchProperties() => (super.noSuchMethod(
+  _i4.Future<void> fetchProperties() => (super.noSuchMethod(
         Invocation.method(
           #fetchProperties,
           [],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i3.Future<void> markPropertyAsPaid(String? propertyId) =>
+  _i4.Future<void> markPropertyAsPaid(String? propertyId) =>
       (super.noSuchMethod(
         Invocation.method(
           #markPropertyAsPaid,
           [propertyId],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  void addListener(_i4.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i5.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -81,7 +103,7 @@ class MockPropertyListNotifier extends _i1.Mock
       );
 
   @override
-  void removeListener(_i4.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i5.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],

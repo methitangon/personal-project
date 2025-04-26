@@ -5,10 +5,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
+import 'package:device_calendar/device_calendar.dart' as _i4;
 import 'package:investment_tracking/features/property_tracking/data/datasources/calendar_data_source.dart'
     as _i2;
-import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart'
-    as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -34,39 +33,34 @@ class MockCalendarDataSource extends _i1.Mock
   }
 
   @override
-  _i3.Future<_i4.PaymentStatus> getEventPaymentStatus({
-    required String? propertyId,
-    required String? propertyName,
-    required DateTime? month,
-  }) =>
+  _i3.Future<List<_i4.Event>> getRawRentalEvents({required DateTime? month}) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getEventPaymentStatus,
+          #getRawRentalEvents,
           [],
-          {
-            #propertyId: propertyId,
-            #propertyName: propertyName,
-            #month: month,
-          },
+          {#month: month},
         ),
-        returnValue:
-            _i3.Future<_i4.PaymentStatus>.value(_i4.PaymentStatus.pending),
-      ) as _i3.Future<_i4.PaymentStatus>);
+        returnValue: _i3.Future<List<_i4.Event>>.value(<_i4.Event>[]),
+      ) as _i3.Future<List<_i4.Event>>);
 
   @override
   _i3.Future<void> updateEventToPaid({
-    required String? propertyId,
-    required String? propertyName,
-    required DateTime? month,
+    required String? eventId,
+    required String? calendarId,
+    required String? currentTitle,
+    required _i4.TZDateTime? start,
+    required _i4.TZDateTime? end,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateEventToPaid,
           [],
           {
-            #propertyId: propertyId,
-            #propertyName: propertyName,
-            #month: month,
+            #eventId: eventId,
+            #calendarId: calendarId,
+            #currentTitle: currentTitle,
+            #start: start,
+            #end: end,
           },
         ),
         returnValue: _i3.Future<void>.value(),
