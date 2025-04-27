@@ -11,20 +11,22 @@ import 'package:investment_tracking/features/property_tracking/presentation/mana
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  sl.registerLazySingleton(() => DeviceCalendarPlugin());
+  sl.registerFactory(() => GetCurrentMonthRentalEvents(sl()));
+  sl.registerFactory(() => MarkEventAsPaid(sl()));
 
-  sl.registerLazySingleton<CalendarDataSource>(
-    () => CalendarDataSourceImpl(plugin: sl()),
+  sl.registerFactory(
+    () => PropertyListNotifier(
+      getCurrentMonthRentalEventsUseCase: sl(),
+      markEventAsPaidUseCase: sl(),
+    ),
   );
 
   sl.registerLazySingleton<PropertyRepository>(
     () => PropertyRepositoryImpl(calendarDataSource: sl()),
   );
 
-  sl.registerFactory(
-    () => PropertyListNotifier(
-      getCurrentMonthRentalEventsUseCase: sl<GetCurrentMonthRentalEvents>(),
-      markEventAsPaidUseCase: sl<MarkEventAsPaid>(),
-    ),
+  sl.registerLazySingleton<CalendarDataSource>(
+    () => CalendarDataSourceImpl(plugin: sl()),
   );
+  sl.registerLazySingleton(() => DeviceCalendarPlugin());
 }

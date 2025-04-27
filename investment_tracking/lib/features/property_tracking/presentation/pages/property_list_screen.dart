@@ -85,7 +85,6 @@ class PropertyListScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final rentalEvent = notifier.rentalEvents[index];
                         return PropertyListItem(
-                          propertyInfo: rentalEvent,
                           rentalEvent: rentalEvent,
                           onMarkAsPaid: () =>
                               notifier.markEventPaid(rentalEvent),
