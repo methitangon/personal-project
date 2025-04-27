@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:clock/clock.dart';
-
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:investment_tracking/features/property_tracking/domain/entities/rental_event.dart';
 import 'package:investment_tracking/features/property_tracking/domain/entities/payment_status.dart';
 import 'package:investment_tracking/features/property_tracking/domain/repositories/property_repository.dart';
@@ -12,6 +13,7 @@ import 'package:investment_tracking/features/property_tracking/domain/usecases/g
 import 'get_properties_with_status_test.mocks.dart';
 
 void main() {
+  tz_data.initializeTimeZones();
   final fixedTime = DateTime(2025, 4, 15, 10, 30, 0);
   final expectedMonth = DateTime(2025, 4);
 
@@ -23,13 +25,13 @@ void main() {
       mockPropertyRepository = MockPropertyRepository();
       usecase = GetCurrentMonthRentalEvents(mockPropertyRepository);
     });
-
+    final tz.Location testLocation = tz.local;
     final rentalEvent1 = RentalEvent(
         eventId: 'ev1',
         calendarId: 'cal1',
         title: '🏠 House A',
         propertyName: 'A',
-        start: DateTime(expectedMonth.year, expectedMonth.month, 5),
+        start: tz.TZDateTime.from(DateTime(2025, 4, 5), testLocation),
         end: null,
         status: PaymentStatus.pending);
     final rentalEvent2 = RentalEvent(
@@ -37,7 +39,7 @@ void main() {
         calendarId: 'cal1',
         title: '✅ 🏠 House B',
         propertyName: 'B',
-        start: DateTime(expectedMonth.year, expectedMonth.month, 10),
+        start: tz.TZDateTime.from(DateTime(2025, 10, 5), testLocation),
         end: null,
         status: PaymentStatus.paid);
 
