@@ -85,8 +85,33 @@ class PropertyListScreen extends StatelessWidget {
                         final rentalEvent = notifier.rentalEvents[index];
                         return PropertyListItem(
                           rentalEvent: rentalEvent,
-                          onMarkAsPaid: () =>
-                              notifier.markEventPaid(rentalEvent),
+                          onMarkAsPaid: () async {
+                            try {
+                              await notifier.markEventPaid(rentalEvent);
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        '${rentalEvent.propertyName} has been marked as paid.'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                final errorMessage = notifier.error ??
+                                    'An unknown error occurred.';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed: $errorMessage'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                              print("Error marking event paid in UI: $e");
+                            }
+                          },
                         );
                       },
                     ),

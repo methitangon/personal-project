@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "investment_tracking",
+            "cwd": "investment_tracking",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "investment_tracking (profile mode)",
+            "cwd": "investment_tracking",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "investment_tracking (release mode)",
+            "cwd": "investment_tracking",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

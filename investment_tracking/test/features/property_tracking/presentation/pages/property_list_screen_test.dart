@@ -171,5 +171,60 @@ void main() {
 
       verify(mockNotifier.markEventPaid(testEventPending)).called(1);
     });
+
+    testWidgets('should show success SnackBar when markEventPaid succeeds',
+        (WidgetTester tester) async {
+      when(mockNotifier.isLoading).thenReturn(false);
+      when(mockNotifier.rentalEvents).thenReturn(testEventList);
+      when(mockNotifier.error).thenReturn(null);
+      when(mockNotifier.markEventPaid(testEventPending))
+          .thenAnswer((_) async {});
+
+      await tester.pumpWidget(createWidgetUnderTest());
+
+      final pendingItemFinder = find.ancestor(
+          of: find.text(testEventPending.title),
+          matching: find.byType(PropertyListItem));
+      final paymentButtonFinder = find.descendant(
+          of: pendingItemFinder, matching: find.byIcon(Icons.price_check));
+      expect(paymentButtonFinder, findsOneWidget);
+
+      await tester.tap(paymentButtonFinder);
+      await tester.pumpAndSettle();
+
+      verify(mockNotifier.markEventPaid(testEventPending)).called(1);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(
+          find.text(
+              '${testEventPending.propertyName} has been marked as paid.'),
+          findsOneWidget);
+    });
+
+    testWidgets('should show error SnackBar when markEventPaid fails',
+        (WidgetTester tester) async {
+      final exception = Exception('Update failed!');
+      const errorMessage = 'Update failed!';
+
+      when(mockNotifier.isLoading).thenReturn(false);
+      when(mockNotifier.rentalEvents).thenReturn(testEventList);
+      when(mockNotifier.error).thenReturn(errorMessage);
+      when(mockNotifier.markEventPaid(testEventPending)).thenThrow(exception);
+
+      await tester.pumpWidget(createWidgetUnderTest());
+
+      final pendingItemFinder = find.ancestor(
+          of: find.text(testEventPending.title),
+          matching: find.byType(PropertyListItem));
+      final paymentButtonFinder = find.descendant(
+          of: pendingItemFinder, matching: find.byIcon(Icons.price_check));
+      expect(paymentButtonFinder, findsOneWidget);
+
+      await tester.tap(paymentButtonFinder);
+      await tester.pumpAndSettle();
+
+      verify(mockNotifier.markEventPaid(testEventPending)).called(1);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('Failed: $errorMessage'), findsOneWidget);
+    });
   });
 }
