@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:investment_tracking/core/di/injection_container.dart';
-import '../../domain/entities/rental_event.dart';
 import '../manager/property_list_notifier.dart';
 import '../widgets/property_list_item.dart';
 

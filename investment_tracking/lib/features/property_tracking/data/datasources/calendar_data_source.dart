@@ -1,5 +1,4 @@
 import 'package:device_calendar/device_calendar.dart';
-import 'package:timezone/timezone.dart';
 
 abstract class CalendarDataSource {
   Future<List<Event>> getRawRentalEvents({required DateTime month});

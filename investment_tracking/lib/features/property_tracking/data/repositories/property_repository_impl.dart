@@ -1,6 +1,4 @@
 import 'package:device_calendar/device_calendar.dart';
-
-import '../../domain/entities/property.dart';
 import '../../domain/entities/rental_event.dart';
 import '../../domain/entities/payment_status.dart';
 import '../../domain/repositories/property_repository.dart';
@@ -13,26 +11,10 @@ class PropertyRepositoryImpl implements PropertyRepository {
   PropertyRepositoryImpl({required this.calendarDataSource});
 
   @override
-  Future<List<Property>> getProperties() async {
-    print("REPOSITORY: Returning hardcoded properties");
-    await Future.delayed(const Duration(milliseconds: 50));
-    return [
-      Property(id: 'house_a', name: 'House A'),
-      Property(id: 'house_b', name: 'House B'),
-      Property(id: 'house_c', name: 'House C'),
-      Property(id: 'alpha_condo', name: 'Alpha Condo'),
-      Property(id: 'beta_house', name: 'Beta House'),
-    ];
-  }
-
-  @override
   Future<List<RentalEvent>> getRentalEventsForMonth(
       {required DateTime month}) async {
-    print("REPOSITORY: getRentalEventsForMonth called for $month");
     final List<Event> rawEvents =
         await calendarDataSource.getRawRentalEvents(month: month);
-    print(
-        "REPOSITORY: Received ${rawEvents.length} raw events from data source.");
 
     final List<RentalEvent> rentalEvents = [];
     const String paidPrefix =
@@ -43,7 +25,6 @@ class PropertyRepositoryImpl implements PropertyRepository {
       if (rawEvent.eventId == null ||
           rawEvent.calendarId == null ||
           rawEvent.title == null) {
-        print("REPOSITORY: Skipping raw event due to missing ID or title.");
         continue;
       }
 
@@ -58,14 +39,10 @@ class PropertyRepositoryImpl implements PropertyRepository {
         status = PaymentStatus.pending;
         propertyName = title.substring(pendingPrefix.length).trim();
       } else {
-        print(
-            "REPOSITORY: Skipping event with unexpected title format: $title");
         continue;
       }
 
       if (propertyName.isEmpty) {
-        print(
-            "REPOSITORY: Skipping event with empty property name after stripping prefixes: $title");
         continue;
       }
 
@@ -79,7 +56,6 @@ class PropertyRepositoryImpl implements PropertyRepository {
         status: status,
       ));
     }
-    print("REPOSITORY: Mapped to ${rentalEvents.length} RentalEvent objects.");
     return rentalEvents;
   }
 
@@ -91,7 +67,6 @@ class PropertyRepositoryImpl implements PropertyRepository {
     required TZDateTime? start,
     required TZDateTime? end,
   }) async {
-    print("REPOSITORY: markEventAsPaid called for eventId $eventId");
     await calendarDataSource.updateEventToPaid(
       eventId: eventId,
       calendarId: calendarId,
@@ -99,7 +74,5 @@ class PropertyRepositoryImpl implements PropertyRepository {
       start: start,
       end: end,
     );
-    print(
-        "REPOSITORY: Call to dataSource.updateEventToPaid completed for $eventId");
   }
 }
